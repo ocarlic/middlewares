@@ -20,21 +20,17 @@ function checksExistsUserAccount(request, response, next) {
 
   request.user = user
 
-  return next()
+  next()
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {  
   const { user } = request
 
-  if (user.pro) {
-    return next()
+  if (!user.pro && user.todos.length === 10) {
+    return response.status(403).json({ error: 'User reached limit for create todos. Get plan pro for create todos limited' })
   }
 
-  if (!user.pro) {
-    return response.status(403).json({ error: 'User not is pro' })
-  }
-
-  return next()
+  next()
 }
 
 function checksTodoExists(request, response, next) {
@@ -67,15 +63,19 @@ function findUserById(request, response, next) {
   const { id } = request.params
   const { user } = request
 
-  const userAlreadyExistsId = users.some(user => user.id === id)
+  if(!validate(id)) {
+    return response.status(400).json({ error: 'Invalid Id' })
+  }
+
+  const userAlreadyExistsId = users.find(user => user.id === id)
 
   if(!userAlreadyExistsId) {
     return response.status(404).json({ error: 'User not found' })
   }
 
-  request.user = user
+  request.user = userAlreadyExistsId
 
-  return next()
+  next()
 }
 
 app.post('/users', (request, response) => {
